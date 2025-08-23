@@ -1,4 +1,11 @@
 import streamlit as st
+# DEBUG: Ver qué claves existen en secrets
+st.write("Claves en secrets:", list(st.secrets.keys()))
+
+# DEBUG: Mostrar valores importantes (sin exponer credenciales privadas)
+st.write("SPREADSHEET_ID:", st.secrets.get("SPREADSHEET_ID", "NO ENCONTRADO"))
+st.write("WORKSHEET_NAME:", st.secrets.get("WORKSHEET_NAME", "NO ENCONTRADO"))
+
 import pandas as pd
 from datetime import datetime
 
