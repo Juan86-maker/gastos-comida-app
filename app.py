@@ -1,22 +1,57 @@
 import streamlit as st
 import pandas as pd
-import os
 from datetime import datetime
 
-# Archivo donde se guardarán los gastos
-FILE_PATH = "gastos.csv"
+import gspread
+from google.oauth2.service_account import Credentials
 
-# Crear el archivo si no existe
-if not os.path.exists(FILE_PATH):
-    df = pd.DataFrame(columns=["Fecha", "Monto", "Lugar", "Metodo"])
-    df.to_csv(FILE_PATH, index=False)
+st.set_page_config(page_title="Gastos de Comida", page_icon="🍎")
 
-# Cargar datos existentes
-df = pd.read_csv(FILE_PATH)
+# --------- Conexión a Google Sheets ----------
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive",
+]
 
-st.title("📊 Registro de Gastos de Comida")
+creds = Credentials.from_service_account_info(
+    st.secrets["gcp_service_account"], scopes=SCOPES
+)
+gc = gspread.authorize(creds)
 
-# --- Formulario para ingresar un gasto ---
+SHEET_ID = st.secrets["SPREADSHEET_ID"]
+WS_NAME = st.secrets.get("WORKSHEET_NAME", "Gastos")
+
+sh = gc.open_by_key(SHEET_ID)
+try:
+    ws = sh.worksheet(WS_NAME)
+except gspread.exceptions.WorksheetNotFound:
+    ws = sh.add_worksheet(title=WS_NAME, rows=1000, cols=10)
+    ws.append_row(["Fecha", "Monto", "Lugar", "Metodo"])
+
+# --------- Funciones de datos ----------
+def load_df():
+    rows = ws.get_all_records()  # requiere encabezados en la fila 1
+    df = pd.DataFrame(rows)
+    if df.empty:
+        df = pd.DataFrame(columns=["Fecha", "Monto", "Lugar", "Metodo"])
+    # Tipos
+    if "Monto" in df.columns:
+        df["Monto"] = pd.to_numeric(df["Monto"], errors="coerce").fillna(0.0)
+    if "Fecha" in df.columns:
+        # Intentar convertir a datetime
+        df["Fecha"] = pd.to_datetime(df["Fecha"], errors="coerce")
+    return df
+
+def append_row(fecha, monto, lugar, metodo):
+    ws.append_row(
+        [fecha, float(monto) if monto else 0.0, lugar, metodo],
+        value_input_option="USER_ENTERED",
+    )
+
+# --------- UI ----------
+st.title("📊 Registro de Gastos de Comida (Google Sheets)")
+st.caption("Multiusuario y persistente en la nube")
+
 with st.form("nuevo_gasto"):
     monto = st.number_input("Monto (€)", min_value=0.0, step=0.5, format="%.2f")
     lugar = st.text_input("Lugar de compra (opcional)")
@@ -24,24 +59,28 @@ with st.form("nuevo_gasto"):
     submitted = st.form_submit_button("Agregar gasto")
 
     if submitted:
-        nueva_fila = {
-            "Fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "Monto": monto,
-            "Lugar": lugar,
-            "Metodo": metodo
-        }
-        df = pd.concat([df, pd.DataFrame([nueva_fila])], ignore_index=True)
-        df.to_csv(FILE_PATH, index=False)
+        fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        append_row(fecha, monto, lugar, metodo)
         st.success("✅ Gasto agregado correctamente")
 
-# --- Mostrar resumen ---
-st.subheader("📅 Últimos gastos")
-st.dataframe(df.tail(10))
+# Recargar datos después de posibles inserciones
+df = load_df()
 
-total_mes = df[df["Fecha"].str.startswith(datetime.now().strftime("%Y-%m"))]["Monto"].sum()
+st.subheader("📅 Últimos gastos")
+st.dataframe(df.tail(10), use_container_width=True)
+
+# Métrica mensual
+if not df.empty and "Fecha" in df.columns:
+    ahora = pd.Timestamp.now()
+    mask_mes = (df["Fecha"].dt.year == ahora.year) & (df["Fecha"].dt.month == ahora.month)
+    total_mes = df.loc[mask_mes, "Monto"].sum()
+else:
+    total_mes = 0.0
+
 st.metric("💰 Total gastado este mes", f"{total_mes:.2f} €")
 
-# --- Gráfico por método de pago ---
+# Gráfico por método de pago
 if not df.empty:
     st.subheader("📊 Gastos por método de pago")
-    st.bar_chart(df.groupby("Metodo")["Monto"].sum())
+    agrup = df.groupby("Metodo", dropna=False)["Monto"].sum()
+    st.bar_chart(agrup)
