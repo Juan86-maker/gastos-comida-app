@@ -26,7 +26,7 @@ try:
     ws = sh.worksheet(WS_NAME)
 except gspread.exceptions.WorksheetNotFound:
     ws = sh.add_worksheet(title=WS_NAME, rows=1000, cols=10)
-    ws.append_row(["Fecha", "Monto", "Lugar", "Metodo"])
+    ws.update("A1:D1", [["Fecha", "Monto", "Lugar", "Metodo"]])
 
 # --------- Funciones de datos ----------
 def load_df():
