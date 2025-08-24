@@ -36,7 +36,7 @@ def load_df():
         df = pd.DataFrame(columns=["Fecha", "Monto", "Lugar", "Metodo"])
     # Tipos
     if "Monto" in df.columns:
-        df["Monto"] = pd.to_numeric(df["Monto"], errors="coerce").fillna(0.0)
+        df["Monto"] = pd.to_numeric(df["Monto"], errors="coerce").fillna(0.0).round(2)
     if "Fecha" in df.columns:
         # Intentar convertir a datetime
         df["Fecha"] = pd.to_datetime(df["Fecha"], errors="coerce")
@@ -45,7 +45,7 @@ def load_df():
 def append_row(fecha, monto, lugar, metodo):
     ws.append_row(
         [fecha, float(monto) if monto else 0.0, lugar, metodo],
-        value_input_option="USER_ENTERED",
+        value_input_option="RAW",  # RAW mantiene el número como tal
     )
 
 # --------- UI ----------
