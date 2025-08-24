@@ -65,20 +65,23 @@ with st.form("nuevo_gasto"):
 
 # Recargar datos después de posibles inserciones
 def load_df():
-    # Asegurar encabezados
-    if not ws.cell(1, 1).value:
-        ws.update("A1:D1", [["Fecha", "Monto", "Lugar", "Metodo"]])
-
     try:
+        # Asegurar que hay encabezados en la fila 1
+        if not ws.cell(1, 1).value:
+            ws.update("A1:D1", [["Fecha", "Monto", "Lugar", "Metodo"]])
+
         rows = ws.get_all_records()
         df = pd.DataFrame(rows)
-    except Exception:
+
+        # Si está vacío, devolvemos DataFrame con columnas correctas
+        if df.empty:
+            df = pd.DataFrame(columns=["Fecha", "Monto", "Lugar", "Metodo"])
+    except Exception as e:
+        # Pase lo que pase, devolvemos DF válido
+        st.error(f"⚠️ Error cargando datos: {e}")
         df = pd.DataFrame(columns=["Fecha", "Monto", "Lugar", "Metodo"])
 
-    if df.empty:
-        df = pd.DataFrame(columns=["Fecha", "Monto", "Lugar", "Metodo"])
-
-    # Tipos
+    # Convertir tipos
     if "Monto" in df.columns:
         df["Monto"] = pd.to_numeric(df["Monto"], errors="coerce").fillna(0.0)
     if "Fecha" in df.columns:
@@ -87,11 +90,10 @@ def load_df():
     return df
 
 st.subheader("📅 Últimos gastos")
-if df is not None and not df.empty:
+if not df.empty:
     st.dataframe(df.tail(10), use_container_width=True)
 else:
     st.info("Aún no hay gastos registrados.")
-
 
 # Métrica mensual
 if not df.empty and "Fecha" in df.columns:
