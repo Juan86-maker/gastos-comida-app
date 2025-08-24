@@ -93,7 +93,7 @@ def load_df():
 
 
 df = load_df()
-st.write("DEBUG → tipo df:", type(df))  # 👈 esta línea es opcional, solo para ver
+# st.write("DEBUG → tipo df:", type(df))  # 👈 esta línea es opcional, solo para ver
 
 st.subheader("📅 Últimos gastos")
 
