@@ -89,11 +89,16 @@ def load_df():
 
     return df
 
+df = load_df()
+st.write("DEBUG → tipo df:", type(df))  # 👈 esta línea es opcional, solo para ver
+
 st.subheader("📅 Últimos gastos")
-if not df.empty:
+
+if isinstance(df, pd.DataFrame) and not df.empty:
     st.dataframe(df.tail(10), use_container_width=True)
 else:
     st.info("Aún no hay gastos registrados.")
+
 
 # Métrica mensual
 if not df.empty and "Fecha" in df.columns:
