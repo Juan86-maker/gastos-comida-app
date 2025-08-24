@@ -1,11 +1,4 @@
 import streamlit as st
-# DEBUG: Ver qué claves existen en secrets
-st.write("Claves en secrets:", list(st.secrets.keys()))
-
-# DEBUG: Mostrar valores importantes (sin exponer credenciales privadas)
-st.write("SPREADSHEET_ID:", st.secrets.get("SPREADSHEET_ID", "NO ENCONTRADO"))
-st.write("WORKSHEET_NAME:", st.secrets.get("WORKSHEET_NAME", "NO ENCONTRADO"))
-
 import pandas as pd
 from datetime import datetime
 
@@ -25,7 +18,7 @@ creds = Credentials.from_service_account_info(
 )
 gc = gspread.authorize(creds)
 
-SHEET_ID = st.secrets["SPREADSHEET_ID"]
+SHEET_ID = st.secrets["default"]["SPREADSHEET_ID"]
 WS_NAME = st.secrets.get("WORKSHEET_NAME", "Gastos")
 
 sh = gc.open_by_key(SHEET_ID)
