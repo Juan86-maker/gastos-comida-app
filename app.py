@@ -65,12 +65,15 @@ with st.form("nuevo_gasto"):
 
 # Recargar datos después de posibles inserciones
 def load_df():
-    # Verificar que la primera celda tenga algo
+    # Asegurar encabezados
     if not ws.cell(1, 1).value:
         ws.update("A1:D1", [["Fecha", "Monto", "Lugar", "Metodo"]])
 
-    rows = ws.get_all_records()
-    df = pd.DataFrame(rows)
+    try:
+        rows = ws.get_all_records()
+        df = pd.DataFrame(rows)
+    except Exception:
+        df = pd.DataFrame(columns=["Fecha", "Monto", "Lugar", "Metodo"])
 
     if df.empty:
         df = pd.DataFrame(columns=["Fecha", "Monto", "Lugar", "Metodo"])
@@ -83,9 +86,12 @@ def load_df():
 
     return df
 
-
 st.subheader("📅 Últimos gastos")
-st.dataframe(df.tail(10), use_container_width=True)
+if df is not None and not df.empty:
+    st.dataframe(df.tail(10), use_container_width=True)
+else:
+    st.info("Aún no hay gastos registrados.")
+
 
 # Métrica mensual
 if not df.empty and "Fecha" in df.columns:
