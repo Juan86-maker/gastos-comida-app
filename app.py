@@ -64,22 +64,24 @@ with st.form("nuevo_gasto"):
         st.success("✅ Gasto agregado correctamente")
 
 # Recargar datos después de posibles inserciones
+HEADERS = ["Fecha", "Monto", "Lugar", "Metodo"]
+
 def load_df():
     try:
-        # Asegurar que hay encabezados en la fila 1
-        if not ws.cell(1, 1).value:
-            ws.update("A1:D1", [["Fecha", "Monto", "Lugar", "Metodo"]])
+        # Verificar si hay encabezados válidos
+        headers = ws.row_values(1)
+        if headers != HEADERS:
+            ws.update("A1:D1", [HEADERS])
 
-        rows = ws.get_all_records()
+        rows = ws.get_all_records(expected_headers=HEADERS)
         df = pd.DataFrame(rows)
 
-        # Si está vacío, devolvemos DataFrame con columnas correctas
         if df.empty:
-            df = pd.DataFrame(columns=["Fecha", "Monto", "Lugar", "Metodo"])
+            df = pd.DataFrame(columns=HEADERS)
+
     except Exception as e:
-        # Pase lo que pase, devolvemos DF válido
         st.error(f"⚠️ Error cargando datos: {e}")
-        df = pd.DataFrame(columns=["Fecha", "Monto", "Lugar", "Metodo"])
+        df = pd.DataFrame(columns=HEADERS)
 
     # Convertir tipos
     if "Monto" in df.columns:
@@ -88,6 +90,7 @@ def load_df():
         df["Fecha"] = pd.to_datetime(df["Fecha"], errors="coerce")
 
     return df
+
 
 df = load_df()
 st.write("DEBUG → tipo df:", type(df))  # 👈 esta línea es opcional, solo para ver
