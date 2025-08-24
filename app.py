@@ -64,7 +64,25 @@ with st.form("nuevo_gasto"):
         st.success("✅ Gasto agregado correctamente")
 
 # Recargar datos después de posibles inserciones
-df = load_df()
+def load_df():
+    # Verificar que la primera celda tenga algo
+    if not ws.cell(1, 1).value:
+        ws.update("A1:D1", [["Fecha", "Monto", "Lugar", "Metodo"]])
+
+    rows = ws.get_all_records()
+    df = pd.DataFrame(rows)
+
+    if df.empty:
+        df = pd.DataFrame(columns=["Fecha", "Monto", "Lugar", "Metodo"])
+
+    # Tipos
+    if "Monto" in df.columns:
+        df["Monto"] = pd.to_numeric(df["Monto"], errors="coerce").fillna(0.0)
+    if "Fecha" in df.columns:
+        df["Fecha"] = pd.to_datetime(df["Fecha"], errors="coerce")
+
+    return df
+
 
 st.subheader("📅 Últimos gastos")
 st.dataframe(df.tail(10), use_container_width=True)
