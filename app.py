@@ -101,6 +101,9 @@ def load_df():
 
 df = load_df()
 # st.write("DEBUG → tipo df:", type(df))  # 👈 esta línea es opcional, solo para ver
+rows = ws.get_all_values()
+st.write(rows[:5])  # ver qué trae exactamente
+
 
 st.subheader("📅 Últimos gastos")
 
