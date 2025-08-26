@@ -68,35 +68,39 @@ HEADERS = ["Fecha", "Monto", "Lugar", "Metodo"]
 
 def load_df():
     try:
-        # Verificar si hay encabezados válidos
-        headers = ws.row_values(1)
-        if headers != HEADERS:
+        # Leer todo como texto sin interpretar
+        rows = ws.get_all_values()
+
+        # Si no hay datos suficientes
+        if not rows or len(rows) < 2:
+            return pd.DataFrame(columns=HEADERS)
+
+        header, data = rows[0], rows[1:]
+        if header != HEADERS:
             ws.update("A1:D1", [HEADERS])
+            header = HEADERS
 
-        rows = ws.get_all_records(expected_headers=HEADERS)
-        df = pd.DataFrame(rows)
-
-        if df.empty:
-            df = pd.DataFrame(columns=HEADERS)
+        df = pd.DataFrame(data, columns=header)
 
     except Exception as e:
         st.error(f"⚠️ Error cargando datos: {e}")
-        df = pd.DataFrame(columns=HEADERS)
+        return pd.DataFrame(columns=HEADERS)
 
-    # Convertir tipos
+    # Conversión de tipos
     if "Monto" in df.columns:
         df["Monto"] = (
             df["Monto"]
             .astype(str)
-            .str.replace(",", ".", regex=False)  # 👈 arregla 0,15 → 0.15
+            .str.replace(",", ".", regex=False)         # 0,15 → 0.15
+            .str.replace(r"[^0-9.\-]", "", regex=True)  # quita símbolos raros
         )
         df["Monto"] = pd.to_numeric(df["Monto"], errors="coerce").fillna(0.0).round(2)
-    
+
     if "Fecha" in df.columns:
         df["Fecha"] = pd.to_datetime(df["Fecha"], errors="coerce")
 
-
     return df
+
 
 
 df = load_df()
