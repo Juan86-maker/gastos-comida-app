@@ -43,9 +43,11 @@ def load_df():
     return df
 
 def append_row(fecha, monto, lugar, metodo):
+    # Guardamos el monto como string con punto decimal
+    monto_str = f"{float(monto):.2f}".replace(",", ".")
     ws.append_row(
-        [fecha, float(monto) if monto else 0.0, lugar, metodo],
-        value_input_option="RAW",  # RAW mantiene el número como tal
+        [fecha, monto_str, lugar, metodo],
+        value_input_option="USER_ENTERED",  # 👈 importante
     )
 
 # --------- UI ----------
