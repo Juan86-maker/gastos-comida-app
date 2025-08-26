@@ -85,9 +85,16 @@ def load_df():
 
     # Convertir tipos
     if "Monto" in df.columns:
-        df["Monto"] = pd.to_numeric(df["Monto"], errors="coerce").fillna(0.0)
+        df["Monto"] = (
+            df["Monto"]
+            .astype(str)
+            .str.replace(",", ".", regex=False)  # 👈 arregla 0,15 → 0.15
+        )
+        df["Monto"] = pd.to_numeric(df["Monto"], errors="coerce").fillna(0.0).round(2)
+    
     if "Fecha" in df.columns:
         df["Fecha"] = pd.to_datetime(df["Fecha"], errors="coerce")
+
 
     return df
 
