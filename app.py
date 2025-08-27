@@ -43,11 +43,9 @@ def load_df():
     return df
 
 def append_row(fecha, monto, lugar, metodo):
-    # Guardamos el monto como string con punto decimal
-    monto_str = f"{float(monto):.2f}".replace(",", ".")
     ws.append_row(
-        [fecha, monto_str, lugar, metodo],
-        value_input_option="USER_ENTERED",  # 👈 importante
+        [fecha, float(monto) if monto else 0.0, lugar, metodo],
+        value_input_option="USER_ENTERED",
     )
 
 # --------- UI ----------
@@ -55,7 +53,7 @@ st.title("📊 Registro de Gastos de Comida (Google Sheets)")
 st.caption("Multiusuario y persistente en la nube")
 
 with st.form("nuevo_gasto"):
-    monto = st.number_input("Monto (€)", min_value=0.0, step=0.5, format="%.2f")
+    monto = st.number_input("Monto (€)", min_value=0.0, step=0.01, format="%.2f")
     lugar = st.text_input("Lugar de compra (opcional)")
     metodo = st.selectbox("Método de pago", ["Tarjeta", "Efectivo"])
     submitted = st.form_submit_button("Agregar gasto")
@@ -70,10 +68,9 @@ HEADERS = ["Fecha", "Monto", "Lugar", "Metodo"]
 
 def load_df():
     try:
-        # Leer todo como texto sin interpretar
-        rows = ws.get_all_values()
+        # Lee sin formateo para evitar el problema de locales (coma/punto)
+        rows = ws.get("A1:D", value_render_option="UNFORMATTED_VALUE", date_time_render_option="FORMATTED_STRING")
 
-        # Si no hay datos suficientes
         if not rows or len(rows) < 2:
             return pd.DataFrame(columns=HEADERS)
 
@@ -90,12 +87,7 @@ def load_df():
 
     # Conversión de tipos
     if "Monto" in df.columns:
-        df["Monto"] = (
-            df["Monto"]
-            .astype(str)
-            .str.replace(",", ".", regex=False)         # 0,15 → 0.15
-            .str.replace(r"[^0-9.\-]", "", regex=True)  # quita símbolos raros
-        )
+        # Con UNFORMATTED_VALUE, Monto ya viene numérico (o string "0.1")
         df["Monto"] = pd.to_numeric(df["Monto"], errors="coerce").fillna(0.0).round(2)
 
     if "Fecha" in df.columns:
@@ -103,10 +95,10 @@ def load_df():
 
     return df
 
-
-
 df = load_df()
-# st.write("DEBUG → tipo df:", type(df))  # 👈 esta línea es opcional, solo para ver
+st.write("DEBUG → primeras filas leídas sin formateo:", ws.get("A1:D5", value_render_option="UNFORMATTED_VALUE"))
+st.write(df.head())
+
 rows = ws.get_all_values()
 st.write(rows[:5])  # ver qué trae exactamente
 
