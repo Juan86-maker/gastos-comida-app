@@ -96,9 +96,6 @@ def load_df():
     return df
 
 df = load_df()
-st.write("DEBUG → primeras filas leídas sin formateo:", ws.get("A1:D5", value_render_option="UNFORMATTED_VALUE"))
-st.write(df.head())
-
 rows = ws.get_all_values()
 st.write(rows[:5])  # ver qué trae exactamente
 
