@@ -96,9 +96,6 @@ def load_df():
     return df
 
 df = load_df()
-rows = ws.get_all_values()
-st.write(rows[:5])  # ver qué trae exactamente
-
 
 st.subheader("📅 Últimos gastos")
 
