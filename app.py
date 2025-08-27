@@ -53,9 +53,7 @@ st.title("📊 Registro de Gastos de Comida (Google Sheets)")
 st.caption("Multiusuario y persistente en la nube")
 
 with st.form("nuevo_gasto"):
-    #monto = st.number_input("Monto (€)", min_value=0.0, step=0.01, format="%.2f")
     monto_str = st.text_input("Monto (€)", value="", placeholder="Ej: 10,50 o 10.50")
-
     # Normalizamos coma/punto y convertimos
     try:
         monto = float(monto_str.replace(",", "."))
